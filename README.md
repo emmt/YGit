@@ -82,7 +82,7 @@ this plug-in (and many others). Assuming `EasyYorick` has been installed,
 installing the `YGit` plug-in is as simple as:
 
 ``` sh
-ypkg update ypkg
+ypkg upgrade ypkg
 ypkg install ygit
 ```
 
