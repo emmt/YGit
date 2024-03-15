@@ -104,7 +104,7 @@ echo >&2 "Yorick site directory ----> $cfg_ysite"
 cfg_pkg_cflags=$cfg_cflags
 cfg_pkg_ldflags=$cfg_ldflags
 cfg_pkg_deplibs=$cfg_deplibs
-if test "x$cfg_cppflags" != x; then
+if test "x$cfg_cppflags" != "x"; then
     cfg_pkg_cflags="$cfg_cppflags $cfg_pkg_cflags"
 fi
 
