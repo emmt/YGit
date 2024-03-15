@@ -36,8 +36,8 @@ repo = git_repository_open(dir);
 ```
 
 with `dir` the repository directory. The syntax `repo.dir` yields the name of
-the repository directory. The resources associated with the repository object
-are automatically released when the object is no longer in use.
+the repository directory. The resources associated with the Git repository
+object are automatically released when the object is no longer in use.
 
 A repository object can be used to lookup a blob:
 
@@ -54,6 +54,9 @@ blob.hash    // the SHA-1 hash of the blob data
 blob.oid     // the Object Identifier Data of the blob data
 blob.size    // the number of bytes of the blob raw content
 ```
+
+The resources associated with the Git blob object are automatically released
+when the object is no longer in use.
 
 A third optional argument can be provided to `git_blob_lookup`, this argument
 is returned if the blob is not found instead or throwing an error:
