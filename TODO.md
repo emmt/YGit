@@ -1,0 +1,1 @@
+- Register absolute path of Git repository.
