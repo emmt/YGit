@@ -15,12 +15,14 @@
  */
 
 #include <errno.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <unistd.h>
 #include <yapi.h>
 #include <pstdlib.h>
 #include <git2.h>
@@ -32,16 +34,19 @@
 #  define  DEBUG(...)
 #endif
 
-static char mesg[256]; // large enough for messages and SHA-1 (40 characters)
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+
+static char buffer[MAX(PATH_MAX, 256)];  // large enough for messages and SHA-1 (40 characters)
 
 static char* format_message(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    vsnprintf(mesg, sizeof(mesg), format, args);
+    vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
-    mesg[sizeof(mesg) - 1] = 0;
-    return mesg;
+    buffer[sizeof(buffer) - 1] = 0;
+    return buffer;
 }
 
 static void report_git_error(int error)
@@ -57,6 +62,56 @@ static void push_string(const char* str)
 {
     char** arr = ypush_q(NULL);
     arr[0] = str == NULL ? NULL : p_strcpy(str);
+}
+
+static const char* expand_path(const char* path, bool expand_tilde)
+{
+    if (path == NULL || path[0] == 0) {
+        y_error("invalid empty/null path");
+    }
+    bool free_path = false;
+    if (expand_tilde) {
+        path = p_native(path);
+        free_path = true;
+    }
+    long len = strlen(path);
+    if (len >= 1 && path[0] != '/') {
+        // Prepend current working directory.
+        if (getcwd(buffer, sizeof(buffer)) == NULL) {
+            if (free_path) {
+                p_free((void*)path);
+            }
+            y_error("failed to get current working directory");
+        }
+        long len1 = strlen(buffer);
+        size_t size = len1 + len + 2;
+        char* work;
+        if (sizeof(buffer) >= size) {
+            work = buffer;
+        } else {
+            work = malloc(size);
+            if (work == NULL) {
+                if (free_path) {
+                    p_free((void*)path);
+                }
+                y_error("insufficent memory");
+            }
+            memcpy(work, buffer, len1 + 1);
+        }
+        work[len1] = '/';
+        memcpy(work + len1 + 1, path, len + 1);
+        if (free_path) {
+            p_free((void*)path);
+        }
+        path = work;
+        free_path = work != buffer;
+        //len += len1 + 1;
+    }
+    if (free_path) {
+        return path;
+    } else {
+        return p_strcpy(path);
+    }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -136,13 +191,13 @@ static void ygit_blob_print(void* addr)
 {
     ygit_blob* obj = addr;
     y_print("Git blob (size = ", 0);
-    snprintf(mesg, sizeof(mesg), "%ld", (long)git_blob_rawsize(obj->blob));
-    mesg[sizeof(mesg) - 1] = 0;
-    y_print(mesg, 0);
+    snprintf(buffer, sizeof(buffer), "%ld", (long)git_blob_rawsize(obj->blob));
+    buffer[sizeof(buffer) - 1] = 0;
+    y_print(buffer, 0);
     y_print(" byte(s), hash = ", 0);
-    git_oid_tostr(mesg, sizeof(mesg) - 1, &obj->oid);
-    mesg[sizeof(mesg) - 1] = 0;
-    y_print(mesg, 0);
+    git_oid_tostr(buffer, sizeof(buffer) - 1, &obj->oid);
+    buffer[sizeof(buffer) - 1] = 0;
+    y_print(buffer, 0);
     y_print(")", 1);
 }
 
@@ -222,7 +277,7 @@ void Y_git_repository_open(int argc)
     }
     ygit_repository* obj = ypush_obj(&ygit_repository_type, sizeof(ygit_repository));
     obj->repo = NULL;
-    obj->dir = p_native(dir);
+    obj->dir = expand_path(dir, false);
     int error = git_repository_open(&obj->repo, obj->dir);
     if (error < 0) {
         report_git_error(error);
