@@ -90,7 +90,7 @@ dummy-default:
 	@echo >&2 "*** ERROR: Y_MAKEDIR not defined, aborting..."; false
 
 %.o: %.c
-	$(CC) $(CPPFLAGS) $(TAO_DEFS) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
 
 # simple example:
 #myfunc.o: myapi.h
