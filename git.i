@@ -52,24 +52,28 @@ extern git_blob_lookup;
    SEE ALSO: `git_repository_open`.
  */
 
-func git_blob_hash(data)
-/* DOCUMENT id = git_blob_hash(data);
+func git_blob_hash(data, T)
+/* DOCUMENT bin_oid = git_blob_hash(data);
+        or  bin_oid = git_blob_hash(data, char);
+        or  str_oid = git_blob_hash(data, string);
 
      Compute the SHA-1 identifier of the Git blob whose content is `data`, a
-     numerical array or a scalar string.
+     numerical array or a scalar string. Above, `bin_oid` is the binary
+     representation of the identifier (a vector of bytes) while `str_oid` is
+     the textual representation of the identifier.
 
    SEE ALSO: `git_blob_lookup`.
  */
 {
     // Check argument.
-    T = structof(data);
-    if (is_void(T) && !is_void(data)) {
+    type = structof(data);
+    if (is_void(type) && !is_void(data)) {
         error, "expecting array content";
-    } else if (T == string) {
+    } else if (type == string) {
         if (!is_scalar(data)) {
             error, "non-scalar string content not supported";
         }
-    } else if (T == pointer) {
+    } else if (type == pointer) {
         error, "array of pointers content not supported";
     }
 
@@ -77,7 +81,14 @@ func git_blob_hash(data)
     // the null separator is simply the final byte of the result of `strchar`.
     state = [];
     sha1, state, strchar(swrite(format="blob %d", sizeof(data)));
-    return sha1(state, data);
+    bin_oid = sha1(state, data);
+    if (is_void(T) || T == char) {
+        return bin_oid;
+    } else if (T == string) {
+        return git_oid_tostr(bin_oid);
+    } else {
+        error, "optional argument T must be `char` or `string`";
+    }
 }
 
 extern git_oid_tostr;
@@ -129,15 +140,15 @@ func git_file_load(filename, T)
 func git_file_save(filename, data, overwrite=)
 {
     // Check data content and convert it to bytes if it is a string.
-    T = structof(data);
-    if (is_void(T) && !is_void(data)) {
+    type = structof(data);
+    if (is_void(type) && !is_void(data)) {
         error, "expecting array content";
-    } else if (T == string) {
+    } else if (type == string) {
         if (!is_scalar(data)) {
             error, "non-scalar string content not supported";
         }
         data = strlen(data) > 0 ? strchar(data)(1:-1) : [];
-    } else if (T == pointer) {
+    } else if (type == pointer) {
         error, "array of pointers content not supported";
     }
 

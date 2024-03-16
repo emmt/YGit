@@ -25,7 +25,9 @@ test_assert, "same_data(bin_data, strchar(str_data)(1:-1))";
 
 bin_oid = git_blob_hash(bin_data);
 test_assert, "same_data(bin_oid, git_blob_hash(str_data))";
+test_assert, "same_data(bin_oid, git_blob_hash(bin_data, char))";
 str_oid = git_oid_tostr(bin_oid)
+test_assert, "str_oid == git_blob_hash(bin_data, string)";
 test_assert, "same_data(bin_oid, git_oid_fromstr(str_oid))";
 blob = git_blob_lookup(repo, bin_oid);
 test_assert, "blob.size == sizeof(bin_data)";
