@@ -80,16 +80,24 @@ func git_blob_hash(data)
     return sha1(state, data);
 }
 
-func git_file_load(filename, T)
+local git_file_load, git_file_save;
 /* DOCUMENT arr = git_file_load(filename);
          or arr = git_file_load(filename, char);
          or str = git_file_load(filename, string);
+         or git_file_save, filename, data, overwrite=0n;
 
-     Read the content of file `filename` as an array of bytes `arr` or, in the
-     latter example, as a single string `str`.
+     The function `git_file_load` reads the content of file `filename` as an
+     array of bytes `arr` or as a single string `str`.
 
-   SEE ALSO: `git_blob_hash`.
+     Conversely, the subroutine `git_file_save` writes the `data` content (a
+     numerical array or a scalar string) into file `filename`. Keyword
+     `overwrite` (false by default) specifies whether an existing file may be
+     overwritten.
+
+   SEE ALSO: `git_blob_hash`, `git_blob_lookup`.
  */
+
+func git_file_load(filename, T)
 {
     file = open(filename, "rb");
     size = sizeof(file);
@@ -104,5 +112,30 @@ func git_file_load(filename, T)
         return strchar(data);
     } else {
         error, "optional argument T must be `char` or `string`";
+    }
+}
+
+func git_file_save(filename, data, overwrite=)
+{
+    // Check data content and convert it to bytes if it is a string.
+    T = structof(data);
+    if (is_void(T) && !is_void(data)) {
+        error, "expecting array content";
+    } else if (T == string) {
+        if (!is_scalar(data)) {
+            error, "non-scalar string content not supported";
+        }
+        data = strlen(data) > 0 ? strchar(data)(1:-1) : [];
+    } else if (T == pointer) {
+        error, "array of pointers content not supported";
+    }
+
+    // Write content.
+    if (!overwrite && open(filename, "r", 1)) {
+        error, "file already exists";
+    }
+    file = open(filename, "wb");
+    if (!is_void(data)) {
+        _write, file, 0, data;
     }
 }
