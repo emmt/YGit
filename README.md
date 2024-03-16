@@ -39,7 +39,7 @@ with `dir` the repository directory. The syntax `repo.dir` yields the name of
 the repository directory. The resources associated with the Git repository
 object are automatically released when the object is no longer in use.
 
-A repository object can be used to lookup a blob:
+A repository object can be used to lookup a blob (the file analog for Git):
 
 ``` c
 blob = git_blob_lookup(repos, id);
@@ -63,6 +63,36 @@ is returned if the blob is not found instead or throwing an error:
 
 ``` c
 blob = git_blob_lookup(repos, id, def);
+```
+
+To compute the SHA-1 identifier of a Git blob whose content is `data` (a
+numerical array or a scalar string), call:
+
+``` c
+id = git_blob_hash(data, T);
+```
+
+where optional argument `T` is `[]` or `char` for a binary identifier, or
+`string` for a textual identifier.
+
+Functions `git_oid_tostr` and `git_oid_fromstr` can be used to convert between
+the binary and textual representations of a Git object identifier.
+
+To load the content of a file:
+
+``` c
+data = git_file_load(filename, T);
+```
+
+with `filename` the name of the file and `T` an optional argument: `[]` or
+`char` to read the content as an array of bytes, `string` to read the content
+as a scalar string.
+
+Conversely, to save some `data` content (a numerical array or a scalar string),
+call:
+
+``` c
+git_file_save, filename, data;
 ```
 
 
