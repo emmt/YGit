@@ -345,3 +345,48 @@ void Y_git_blob_lookup(int argc)
         return;
     }
 }
+
+void Y_git_oid_tostr(int argc)
+{
+    if (argc != 1) y_error("expecting exactly 1 argument");
+    int iarg = argc - 1;
+    int type = yarg_typeid(iarg);
+    int rank = yarg_rank(iarg);
+    if (type == Y_CHAR && rank == 1) {
+        // Got array of bytes.
+        long nbytes;
+        const void* bytes = ygeta_c(iarg, &nbytes, NULL);
+        if (nbytes == sizeof(git_oid)) {
+            git_oid_tostr(buffer, sizeof(buffer) - 1, (const git_oid*)bytes);
+            buffer[sizeof(buffer) - 1] = '\0';
+            push_string(buffer);
+            return;
+        }
+    }
+    y_error(format_message("Git SHA-1 binary identifier must be a vector of %ld char's",
+                           (long)sizeof(git_oid)));
+}
+
+void Y_git_oid_fromstr(int argc)
+{
+    if (argc != 1) y_error("expecting exactly 1 argument");
+    int iarg = argc - 1;
+    int type = yarg_typeid(iarg);
+    int rank = yarg_rank(iarg);
+    if (type == Y_STRING && rank == 0) {
+        // Got scalar string.
+        const char* str = ygets_q(iarg);
+        long len = str == NULL ? 0 : strlen(str);
+        if (len == 2*sizeof(git_oid)) {
+            void* buf = ypush_c((long[]){1, sizeof(git_oid)});
+            int error = git_oid_fromstr((git_oid*)buf, str);
+            if (error < 0) {
+                report_git_error(error);
+            }
+            return;
+        }
+    }
+    y_error(format_message("Git SHA-1 string identifier must be a string "
+                           "of %ld hexadecimal characters",
+                           2*(long)sizeof(git_oid)));
+}

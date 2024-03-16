@@ -80,6 +80,17 @@ func git_blob_hash(data)
     return sha1(state, data);
 }
 
+extern git_oid_tostr;
+extern git_oid_fromstr;
+/* DOCUMENT oid_str = git_oid_tostr(oid_bin);
+         or oid_bin = git_oid_fromstr(oid_str);
+
+     These functions convert between the binary, `oid_bin`, and textual,
+     `oid_str`, forms of the SHA-1 identifier of a Git object.
+
+   SEE ALSO: `git_blob_hash`, `git_blob_lookup`.
+ */
+
 local git_file_load, git_file_save;
 /* DOCUMENT arr = git_file_load(filename);
          or arr = git_file_load(filename, char);
