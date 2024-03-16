@@ -78,3 +78,30 @@ func git_blob_hash(data)
     sha1, state, strchar(swrite(format="blob %d", sizeof(data)));
     return sha1(state, data);
 }
+
+func git_file_load(filename, T)
+/* DOCUMENT arr = git_file_load(filename);
+         or arr = git_file_load(filename, char);
+         or str = git_file_load(filename, string);
+
+     Read the content of file `filename` as an array of bytes `arr` or, in the
+     latter example, as a single string `str`.
+
+   SEE ALSO: `git_blob_hash`.
+ */
+{
+    file = open(filename, "rb");
+    size = sizeof(file);
+    data = array(char, size);
+    byte = char();
+    if (_read(file, 0, data) != size || _read(file, size, byte) != 0) {
+        error, "size of file changed while reading";
+    }
+    if (is_void(T) || T == char) {
+        return data;
+    } else if (T == string) {
+        return strchar(data);
+    } else {
+        error, "optional argument T must be `char` or `string`";
+    }
+}
