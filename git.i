@@ -63,7 +63,7 @@ func git_blob_hash(data)
 {
     // Check argument.
     T = structof(data);
-    if (is_void(T)) {
+    if (is_void(T) && !is_void(data)) {
         error, "expecting array content";
     } else if (T == string) {
         if (!is_scalar(data)) {
@@ -73,7 +73,8 @@ func git_blob_hash(data)
         error, "array of pointers content not supported";
     }
 
-    // Compute SHA-1 digest of "blob " + sizeof(data) + "\0" + data.
+    // Compute SHA-1 digest of "blob " + sizeof(data) + "\0" + data. Note that
+    // the null separator is simply the final byte of the result of `strchar`.
     state = [];
     sha1, state, strchar(swrite(format="blob %d", sizeof(data)));
     return sha1(state, data);
