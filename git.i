@@ -34,7 +34,7 @@ extern git_blob_lookup;
      argument `id` is the SHA-1 identifier of the object (as a string or as an
      array of bytes) which can be computed by:
 
-          `shasum("blob " + size + "\0" + contents)`
+         sha1("blob " + size + "\0" + contents)
 
      Optional argument `def` is returned if the blob is not found. If `def` is
      not specified, an error is raised if the blob is not found.
@@ -51,3 +51,30 @@ extern git_blob_lookup;
 
    SEE ALSO: `git_repository_open`.
  */
+
+func git_blob_hash(data)
+/* DOCUMENT id = git_blob_hash(data);
+
+     Compute the SHA-1 identifier of the Git blob whose content is `data`, a
+     numerical array or a scalar string.
+
+   SEE ALSO: `git_blob_lookup`.
+ */
+{
+    // Check argument.
+    T = structof(data);
+    if (is_void(T)) {
+        error, "expecting array content";
+    } else if (T == string) {
+        if (!is_scalar(data)) {
+            error, "non-scalar string content not supported";
+        }
+    } else if (T == pointer) {
+        error, "array of pointers content not supported";
+    }
+
+    // Compute SHA-1 digest of "blob " + sizeof(data) + "\0" + data.
+    state = [];
+    sha1, state, strchar(swrite(format="blob %d", sizeof(data)));
+    return sha1(state, data);
+}
